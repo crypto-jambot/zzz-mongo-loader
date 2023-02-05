@@ -1,0 +1,65 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: 'https://npm.pkg.github.com'
+            # Defaults to the user or organization that owns the workflow file
+          scope: '@crypto-jambot'
+      - name: Install dependencies
+        run: npm install --production --engine-strict --ignore-scripts --no-package-lock
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Run tests
+      #   run: npm test
+      - name: Run build
+        run: npm run build
+      - name: Setup git config
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+      - name: Patch version
+        run: npm run patch
+      - name: Push package.json update
+        run: git push
+      - name: Push tag
+        run: git push --tags
+      - name: Generate .npmrc
+        run: |
+          touch .npmrc
+          echo "always-auth=true" >> dist/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> dist/.npmrc
+          echo "@crypto-jambot:registry=https://npm.pkg.github.com/" >> dist/.npmrc
+      - name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+      - name: Deploy Cloud Function
+        uses: google-github-actions/deploy-cloud-functions@v1
+        with:
+          name: ${{ secrets.FUNCTION_NAME_HTTP }}
+          runtime: nodejs16
+          entry_point: ${{ secrets.HTTP_ENTRY_NAME }}
+          source_dir: dist/
+          service_account_email: ${{ secrets.SERVICE_ACCOUNT }}
+          max_instances: 1
+          ingress_settings: ALLOW_INTERNAL_ONLY

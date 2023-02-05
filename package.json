@@ -1,0 +1,22 @@
+{
+  "name": "mongo-loader",
+  "version": "1.0.0",
+  "description": "Takes in a GCS directory and loads all files into an on prem mongoDB instance.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crypto-jambot/mongo-loader.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/crypto-jambot/mongo-loader/issues"
+  },
+  "homepage": "https://github.com/crypto-jambot/mongo-loader#readme",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.1.3"
+  }
+}
