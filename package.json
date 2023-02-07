@@ -2,9 +2,12 @@
   "name": "mongo-loader",
   "version": "1.0.0",
   "description": "Takes in a GCS directory and loads all files into an on prem mongoDB instance.",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node .",
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "nodemon src/index.ts",
+    "patch": "npm version patch --git-tag-version"
   },
   "repository": {
     "type": "git",
@@ -16,7 +19,16 @@
     "url": "https://github.com/crypto-jambot/mongo-loader/issues"
   },
   "homepage": "https://github.com/crypto-jambot/mongo-loader#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.20",
+    "typescript": "^4.9.4"
+  },
   "dependencies": {
-    "@google-cloud/functions-framework": "^3.1.3"
+    "@crypto-jambot/proxy-utils": "^1.0.0",
+    "@crypto-jambot/secret-manager-utils": "^1.1.1",
+    "@google-cloud/functions-framework": "^3.1.3",
+    "@google-cloud/storage": "^6.9.2",
+    "axios": "^1.3.2",
+    "dotenv": "^16.0.3"
   }
 }
