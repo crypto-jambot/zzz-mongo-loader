@@ -113,3 +113,77 @@ export function sendBatchedFiles<T>(
         }
     });
 }
+
+export async function sendFilesSync<T>(
+    files: File[],
+    bucketName: string,
+    token: string
+): Promise<T[]> {
+    const responses = [];
+    for (const file of files) {
+        const response = await makeAxiosRequest<T>(
+            "https://rabbit.dev/mongo/publish",
+            "POST",
+            {
+                Authorization: `Bearer ${token}`,
+            },
+            {
+                fileName: file.name,
+                bucket: bucketName,
+            }
+        );
+        responses.push(response);
+    }
+    return responses;
+}
+
+export async function sleep(ms: number | undefined) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
+}
+
+// async function makeBatchRequest(
+//     requests: RPCRequest[],
+//     accessToken: string
+// ): Promise<Response[]> {
+//     const config = {
+//         method: "post",
+//         url: process.env.JAM_ETH_NODE_HTTPS,
+//         headers: {
+//             Authorization: `Bearer ${accessToken}`,
+//             "Content-Type": "application/json",
+//         },
+//         maxBodyLength: Infinity,
+//         data: JSON.stringify(requests),
+//         httpsAgent: new https.Agent({ keepAlive: true }),
+//     };
+//     return (await axios(config)).data;
+// }
+//
+// export async function makeChunkedRequest<T>(
+//     files: File[],
+//     bucketName: string,
+//     token: string,
+//     numChunks: number
+// ): Promise<Promise<Response[]>> {
+//     let chunkStart = 0;
+//     let chunks: Promise<Response[]>[] = [];
+//     const constantSize = Math.floor(files.length / numChunks);
+//     for (let i = 1; i <= numChunks; i++) {
+//         const previous = chunkStart;
+//         if (i === numChunks) {
+//             chunks = chunks.concat(
+//                 await sendFiles(files, bucketName, token);
+//             );
+//             break;
+//         }
+//         chunkStart = constantSize + previous;
+//         chunks = chunks.concat(
+//             makeBatchRequest(requests.slice(previous, chunkStart), accessToken)
+//         );
+//     }
+//     return (await Promise.all(chunks)).reduce((previousValue, currentValue) => {
+//         return [...previousValue, ...currentValue];
+//     });
+// }
