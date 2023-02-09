@@ -1,4 +1,4 @@
-import { IncomingHttpHeaders, Agent } from "http";
+import { IncomingHttpHeaders } from "http";
 import axios, { Axios, AxiosRequestConfig, AxiosResponse, Method } from "axios";
 import { File } from "@google-cloud/storage";
 
@@ -53,18 +53,12 @@ export function scaleService<T>(
     });
 }
 
-export async function sleep(ms: number | undefined) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}
-
 export async function sendFiles<T>(
     files: File[],
     bucketName: string,
     token: string
-): Promise<AxiosResponse<T>[]> {
-    return new Promise<AxiosResponse<T>[]>(async (resolve, reject) => {
+): Promise<T[]> {
+    return new Promise<T[]>(async (resolve, reject) => {
         try {
             const promises: Promise<AxiosResponse<T>>[] = files.map((file) => {
                 return makeAxiosRequest(
@@ -79,8 +73,9 @@ export async function sendFiles<T>(
                     }
                 );
             });
-            const response = await Promise.all(promises);
-            resolve(response);
+            resolve(
+                (await Promise.all(promises)).map((response) => response.data)
+            );
         } catch (err) {
             reject(err);
         }
@@ -95,46 +90,22 @@ export function sendBatchedFiles<T>(
 ) {
     return new Promise<T[]>(async (resolve, reject) => {
         try {
-            const responseArray: AxiosResponse<T, any>[] = [];
+            let responseArray: T[] = [];
             for (let i = 0; i < files.length; i += size) {
                 const constant = i + size;
-                responseArray.concat(
-                    await sendFiles<T>(
-                        files.slice(i, constant),
-                        bucketName,
-                        token
-                    )
+                const responses = await sendFiles<T>(
+                    files.slice(i, constant),
+                    bucketName,
+                    token
                 );
+                responseArray = [...responseArray, ...responses];
                 console.log(`Sent ${constant} files`);
             }
-            resolve(responseArray.map((response) => response.data));
+            resolve(responseArray);
         } catch (err) {
             reject(err);
         }
     });
-}
-
-export async function sendFilesSync<T>(
-    files: File[],
-    bucketName: string,
-    token: string
-): Promise<T[]> {
-    const responses = [];
-    for (const file of files) {
-        const response = await makeAxiosRequest<T>(
-            "https://rabbit.dev/mongo/publish",
-            "POST",
-            {
-                Authorization: `Bearer ${token}`,
-            },
-            {
-                fileName: file.name,
-                bucket: bucketName,
-            }
-        );
-        responses.push(response);
-    }
-    return responses;
 }
 
 export async function sleep(ms: number | undefined) {
