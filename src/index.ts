@@ -70,40 +70,28 @@ type DatabaseResponse = {
     const secretUtil: SecretUtil = new SecretUtil();
     const apiKey: string = await secretUtil.getSecretString("api-secret-key");
     const { token } = await getAccessToken(apiKey);
-    const replicas = process.env.REPLICAS ? parseInt(process.env.REPLICAS) : 5;
-    console.log("Scaling up...");
-    const scalingUpResponse = await scaleService(
-        "database-api",
-        "mongodb",
-        replicas,
-        token
-    );
-    console.log("Waiting 10 Seconds...");
-    await sleep(10000);
     const start = Date.now();
     console.log("Sending Files now...");
     try {
-        const inserted = (
-            await sendBatchedFiles<DatabaseResponse>(
-                files,
-                "resolved-paths",
-                token
-            )
-        ).reduce((previousValue, currentValue, currentIndex, array) => {
-            return previousValue + currentValue.message;
-        }, 0);
+        const response = await sendBatchedFiles<DatabaseResponse>(
+            files,
+            "resolved-paths",
+            token,
+            25
+        );
+        const inserted = response.reduce(
+            (previousValue, currentValue, currentIndex, array) => {
+                return previousValue + currentValue.message;
+            },
+            0
+        );
         console.log(`Inserted ${inserted} rows`);
-    } catch (err) {
+        const end = Date.now();
+        console.log("Ye boi I am done.");
+        console.log(`Total time taken: ${(end - start) / 1000 / 60}`);
+    } catch (err: any) {
+        console.log(err.message ?? err);
+        // res.status(err.statusCode).json(err.message);
         console.log(err);
     }
-    const end = Date.now();
-    console.log("Scaling down...");
-    const scalingDownResponse = await scaleService(
-        "database-api",
-        "mongodb",
-        1,
-        token
-    );
-    console.log("Ye boi I am done.");
-    console.log("Total time (ms) taken: " + (end - start));
 })();
