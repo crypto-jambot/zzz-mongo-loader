@@ -1,11 +1,15 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
 name: Node.js CI
 
 on:
   push:
-    branches: ["main"]
+    branches: ['main']
 
 jobs:
-  deploy:
+  build:
+    if: "!contains(github.event.commits[0].author.name, 'GitHub Actions Bot')"
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -23,16 +27,16 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           registry-url: 'https://npm.pkg.github.com'
-            # Defaults to the user or organization that owns the workflow file
+          # Defaults to the user or organization that owns the workflow file
           scope: '@crypto-jambot'
+
       - name: Install dependencies
         run: npm install --production --engine-strict --ignore-scripts --no-package-lock
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       # - name: Run tests
       #   run: npm test
-      - name: Run build
-        run: npm run build
       - name: Setup git config
         run: |
           git config user.name "GitHub Actions Bot"
@@ -43,23 +47,3 @@ jobs:
         run: git push
       - name: Push tag
         run: git push --tags
-      - name: Generate .npmrc
-        run: |
-          touch .npmrc
-          echo "always-auth=true" >> dist/.npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> dist/.npmrc
-          echo "@crypto-jambot:registry=https://npm.pkg.github.com/" >> dist/.npmrc
-      - name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v1'
-        with:
-          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
-      - name: Deploy Cloud Function
-        uses: google-github-actions/deploy-cloud-functions@v1
-        with:
-          name: ${{ secrets.FUNCTION_NAME_HTTP }}
-          runtime: nodejs16
-          entry_point: ${{ secrets.HTTP_ENTRY_NAME }}
-          source_dir: dist/
-          service_account_email: ${{ secrets.SERVICE_ACCOUNT }}
-          max_instances: 1
-          ingress_settings: ALLOW_INTERNAL_ONLY
