@@ -1,6 +1,6 @@
 {
   "name": "mongo-loader",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Takes in a GCS directory and loads all files into an on prem mongoDB instance.",
   "main": "dist/server.js",
   "scripts": {
