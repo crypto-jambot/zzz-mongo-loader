@@ -31,14 +31,6 @@ export const main = async (requestBody: RequestBody) => {
     );
     const { token } = await getAccessToken(apiKey);
     const start: number = Date.now();
-    const scalingUpResponse = await scaleService(
-        "database-api",
-        "mongodb",
-        2,
-        token
-    );
-    console.log("Waiting 10 seconds");
-    await sleep(10000);
     console.log("Sending Files now...");
 
     const response = await sendBatchedFiles<DatabaseResponse>(
