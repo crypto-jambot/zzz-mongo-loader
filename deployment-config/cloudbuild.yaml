@@ -44,9 +44,9 @@ substitutions:
   _SECRET_VERSION: latest
   _NPM_SECRET_KEY: npm-token-key
   _REGISTRY_URL: https://npm.pkg.github.com/
-  _TIMEOUT: 30m
+  _TIMEOUT: 60m
   _API_SECRET_KEY: api-secret-key
-  _BATCH_FILE_SIZE: '50'
+  _BATCH_FILE_SIZE: '25'
   _MONGO_PUBLISH_ENDPOINT: https://rabbit.dev/mongo/publish
 availableSecrets:
   secretManager:
